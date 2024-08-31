@@ -25,7 +25,7 @@ export default function QuizPage() {
   };
 
   return (
-    <div className='flex flex-col items-center justify-center min-h-screen p-4 bg-gray-100'>
+    <div className='flex flex-col items-center justify-center min-h-svh p-4 bg-base-200 text-base-content'>
       {showQuiz ? (
         <>
           <div className='text-2xl font-bold mb-4'>
@@ -38,13 +38,13 @@ export default function QuizPage() {
             }}
           ></div>
           <button
-            className='mb-4 px-4 py-2 bg-blue-500 text-white rounded'
+            className='btn btn-secondary btn-lg mb-2'
             onClick={() => setShowAnswer(true)}
           >
             解答を表示
           </button>
           <button
-            className='px-4 py-2 bg-green-500 text-white rounded'
+            className='btn btn-primary btn-lg'
             onClick={handleNextQuestion}
           >
             次の問題へ
@@ -53,10 +53,7 @@ export default function QuizPage() {
       ) : (
         <div className='text-center'>
           <h1 className='text-4xl font-bold mb-8'>JIS慣用色クイズ</h1>
-          <button
-            className='px-6 py-3 bg-green-500 text-white text-xl rounded'
-            onClick={handleStartQuiz}
-          >
+          <button className='btn btn-primary btn-lg' onClick={handleStartQuiz}>
             クイズを開始
           </button>
         </div>
