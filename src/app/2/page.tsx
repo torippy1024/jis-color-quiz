@@ -8,8 +8,25 @@ function getRandomQuestion(): ColorQuestion {
   return questions[randomIndex];
 }
 
+function calculateColorDifference(
+  r1: number,
+  g1: number,
+  b1: number,
+  r2: number,
+  g2: number,
+  b2: number,
+): number {
+  // const [r1, g1, b1] = color1.match(/\d+/g)!.map(Number);
+  const diff = Math.sqrt(
+    Math.pow(r1 - r2, 2) + Math.pow(g1 - g2, 2) + Math.pow(b1 - b2, 2),
+  );
+  return Math.round(100 - (diff / Math.sqrt(3 * Math.pow(255, 2))) * 100);
+}
+
 export default function QuizPage() {
   const [showQuiz, setShowQuiz] = useState(false);
+  const [userColor, setUserColor] = useState<string>('#ffffff');
+  const [score, setScore] = useState<number | null>(null);
   const [currentQuestion, setCurrentQuestion] = useState<ColorQuestion>(
     getRandomQuestion(),
   );
@@ -17,6 +34,23 @@ export default function QuizPage() {
 
   const handleStartQuiz = () => {
     setShowQuiz(true);
+  };
+
+  const handleAnswer = () => {
+    const [r, g, b] = userColor
+      .slice(1)
+      .match(/.{1,2}/g)!
+      .map((hex) => parseInt(hex, 16));
+    const diff = calculateColorDifference(
+      r,
+      g,
+      b,
+      currentQuestion.r,
+      currentQuestion.g,
+      currentQuestion.b,
+    );
+    setScore(diff);
+    setShowAnswer(true);
   };
 
   const handleNextQuestion = () => {
@@ -29,6 +63,19 @@ export default function QuizPage() {
       {showQuiz ? (
         <>
           <div className='text-2xl font-bold mb-4'>{currentQuestion.ans}</div>
+          <input
+            type='color'
+            value={userColor}
+            onChange={(e) => setUserColor(e.target.value)}
+          />
+          {showAnswer && score ? (
+            <div className='text-2xl font-bold h-8'>
+              {score >= 85 ? '正解！' : score >= 70 ? 'まあまあ！' : '残念！'} (
+              {score}%)
+            </div>
+          ) : (
+            <div className='text-2xl font-bold h-8' />
+          )}
           <div
             className='w-64 h-64 mb-4 flex items-center justify-center font-bold text-4xl'
             style={{
@@ -41,7 +88,7 @@ export default function QuizPage() {
           </div>
           <button
             className='btn btn-secondary btn-lg mb-2'
-            onClick={() => setShowAnswer(true)}
+            onClick={handleAnswer}
           >
             解答を表示
           </button>
