@@ -2,6 +2,7 @@
 
 import {useState} from 'react';
 import {questions, ColorQuestion} from '../../data/questions';
+import {HexColorPicker} from 'react-colorful';
 
 function getRandomQuestion(): ColorQuestion {
   const randomIndex = Math.floor(Math.random() * questions.length);
@@ -68,6 +69,7 @@ export default function QuizPage() {
             value={userColor}
             onChange={(e) => setUserColor(e.target.value)}
           />
+          <HexColorPicker color={userColor} onChange={setUserColor} />
           {showAnswer && score ? (
             <div className='text-2xl font-bold h-8'>
               {score >= 85 ? '正解！' : score >= 70 ? 'まあまあ！' : '残念！'} (
@@ -77,7 +79,7 @@ export default function QuizPage() {
             <div className='text-2xl font-bold h-8' />
           )}
           <div
-            className='w-64 h-64 mb-4 flex items-center justify-center font-bold text-4xl'
+            className='w-48 h-48 mb-4 flex items-center justify-center font-bold text-4xl'
             style={{
               backgroundColor: showAnswer
                 ? `rgb(${currentQuestion.r}, ${currentQuestion.g}, ${currentQuestion.b})`
@@ -86,18 +88,20 @@ export default function QuizPage() {
           >
             {showAnswer ? '' : '？'}
           </div>
-          <button
-            className='btn btn-secondary btn-lg mb-2'
-            onClick={handleAnswer}
-          >
-            解答を表示
-          </button>
-          <button
-            className='btn btn-primary btn-lg'
-            onClick={handleNextQuestion}
-          >
-            次の問題へ
-          </button>
+          <div className='flex gap-2'>
+            <button
+              className='btn btn-secondary btn-lg mb-2'
+              onClick={handleAnswer}
+            >
+              解答を表示
+            </button>
+            <button
+              className='btn btn-primary btn-lg'
+              onClick={handleNextQuestion}
+            >
+              次の問題へ
+            </button>
+          </div>
         </>
       ) : (
         <div className='text-center'>
