@@ -4,9 +4,9 @@ import {useState} from 'react';
 import {questions, ColorQuestion} from '../../data/questions';
 import {HexColorPicker} from 'react-colorful';
 
-function getRandomQuestion(): ColorQuestion {
-  const randomIndex = Math.floor(Math.random() * questions.length);
-  return questions[randomIndex];
+function getRandomQuestion(remainingQuestions: ColorQuestion[]): ColorQuestion {
+  const randomIndex = Math.floor(Math.random() * remainingQuestions.length);
+  return remainingQuestions[randomIndex];
 }
 
 function calculateColorDifference(
@@ -17,7 +17,6 @@ function calculateColorDifference(
   g2: number,
   b2: number,
 ): number {
-  // const [r1, g1, b1] = color1.match(/\d+/g)!.map(Number);
   const diff = Math.sqrt(
     Math.pow(r1 - r2, 2) + Math.pow(g1 - g2, 2) + Math.pow(b1 - b2, 2),
   );
@@ -28,8 +27,12 @@ export default function QuizPage() {
   const [showQuiz, setShowQuiz] = useState(false);
   const [userColor, setUserColor] = useState<string>('#ffffff');
   const [score, setScore] = useState<number | null>(null);
+  const [correctCount, setCorrectCount] = useState(0);
+  const [remainingQuestions, setRemainingQuestions] = useState<ColorQuestion[]>(
+    [...questions],
+  );
   const [currentQuestion, setCurrentQuestion] = useState<ColorQuestion>(
-    getRandomQuestion(),
+    getRandomQuestion(remainingQuestions),
   );
   const [showAnswer, setShowAnswer] = useState(false);
 
@@ -55,14 +58,33 @@ export default function QuizPage() {
   };
 
   const handleNextQuestion = () => {
-    setCurrentQuestion(getRandomQuestion());
-    setShowAnswer(false);
+    const newRemainingQuestions =
+      score && score >= 85
+        ? remainingQuestions.filter((q) => q !== currentQuestion)
+        : [...remainingQuestions];
+    if (newRemainingQuestions.length > 0) {
+      const nextQuestion = getRandomQuestion(newRemainingQuestions);
+      setCurrentQuestion(nextQuestion);
+      setRemainingQuestions(newRemainingQuestions);
+      setShowAnswer(false);
+      setCorrectCount((count) => (score && score >= 85 ? count + 1 : count));
+      setScore(null);
+    } else {
+      alert('全ての問題を解きました！');
+      setCurrentQuestion(getRandomQuestion(questions));
+      setRemainingQuestions([...questions]);
+      setCorrectCount(0);
+      setShowQuiz(false);
+    }
   };
 
   return (
     <div className='flex flex-col items-center justify-center min-h-svh p-4 bg-base-200 text-base-content'>
       {showQuiz ? (
         <>
+          <div>
+            現在の正解数：{correctCount} / {questions.length} 問
+          </div>
           <div className='text-2xl font-bold mb-4'>{currentQuestion.ans}</div>
           <input
             type='color'
