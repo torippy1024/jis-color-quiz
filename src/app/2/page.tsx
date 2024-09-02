@@ -1,6 +1,6 @@
 'use client';
 
-import {useState} from 'react';
+import {useState, useEffect} from 'react';
 import {questions, ColorQuestion} from '../../data/questions';
 import {HexColorPicker} from 'react-colorful';
 
@@ -27,34 +27,66 @@ export default function QuizPage() {
   const [showQuiz, setShowQuiz] = useState(false);
   const [userColor, setUserColor] = useState<string>('#ffffff');
   const [score, setScore] = useState<number | null>(null);
-  const [correctCount, setCorrectCount] = useState(0);
   const [remainingQuestions, setRemainingQuestions] = useState<ColorQuestion[]>(
-    [...questions],
+    [],
   );
-  const [currentQuestion, setCurrentQuestion] = useState<ColorQuestion>(
-    getRandomQuestion(remainingQuestions),
+  const [currentQuestion, setCurrentQuestion] = useState<ColorQuestion | null>(
+    null,
   );
   const [showAnswer, setShowAnswer] = useState(false);
+  const [quizStarted, setQuizStarted] = useState(false);
+
+  useEffect(() => {
+    const savedData = localStorage.getItem('quizProgress');
+    if (savedData) {
+      const parsedData = JSON.parse(savedData);
+      setRemainingQuestions(parsedData.remainingQuestions);
+      setCurrentQuestion(parsedData.currentQuestion);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (quizStarted) {
+      localStorage.setItem(
+        'quizProgress',
+        JSON.stringify({remainingQuestions, currentQuestion}),
+      );
+    }
+  }, [remainingQuestions, currentQuestion, quizStarted]);
 
   const handleStartQuiz = () => {
+    const initialQuestions = [...questions];
+    setRemainingQuestions(initialQuestions);
+    setCurrentQuestion(getRandomQuestion(initialQuestions));
+    setQuizStarted(true);
     setShowQuiz(true);
+    setShowAnswer(false);
+    setScore(null);
+    localStorage.removeItem('quizProgress');
+  };
+
+  const handleContinueQuiz = () => {
+    setShowQuiz(true);
+    setQuizStarted(true);
   };
 
   const handleAnswer = () => {
-    const [r, g, b] = userColor
-      .slice(1)
-      .match(/.{1,2}/g)!
-      .map((hex) => parseInt(hex, 16));
-    const diff = calculateColorDifference(
-      r,
-      g,
-      b,
-      currentQuestion.r,
-      currentQuestion.g,
-      currentQuestion.b,
-    );
-    setScore(diff);
-    setShowAnswer(true);
+    if (currentQuestion) {
+      const [r, g, b] = userColor
+        .slice(1)
+        .match(/.{1,2}/g)!
+        .map((hex) => parseInt(hex, 16));
+      const diff = calculateColorDifference(
+        r,
+        g,
+        b,
+        currentQuestion.r,
+        currentQuestion.g,
+        currentQuestion.b,
+      );
+      setScore(diff);
+      setShowAnswer(true);
+    }
   };
 
   const handleNextQuestion = () => {
@@ -67,32 +99,31 @@ export default function QuizPage() {
       setCurrentQuestion(nextQuestion);
       setRemainingQuestions(newRemainingQuestions);
       setShowAnswer(false);
-      setCorrectCount((count) => (score && score >= 85 ? count + 1 : count));
       setScore(null);
     } else {
       alert('全ての問題を解きました！');
-      setCurrentQuestion(getRandomQuestion(questions));
-      setRemainingQuestions([...questions]);
-      setCorrectCount(0);
+      localStorage.removeItem('quizProgress');
       setShowQuiz(false);
+      setQuizStarted(false);
     }
   };
 
   return (
-    <div className='flex flex-col items-center justify-center min-h-svh p-4 bg-base-200 text-base-content'>
+    <div className='flex flex-col items-center justify-center min-h-screen p-4 bg-base-200 text-base-content'>
       {showQuiz ? (
         <>
           <div>
-            現在の正解数：{correctCount} / {questions.length} 問
+            現在の正解数：{questions.length - remainingQuestions.length} /{' '}
+            {questions.length} 問
           </div>
-          <div className='text-2xl font-bold mb-4'>{currentQuestion.ans}</div>
+          <div className='text-2xl font-bold mb-4'>{currentQuestion?.ans}</div>
           <input
             type='color'
             value={userColor}
             onChange={(e) => setUserColor(e.target.value)}
           />
           <HexColorPicker color={userColor} onChange={setUserColor} />
-          {showAnswer && score ? (
+          {showAnswer && score !== null ? (
             <div className='text-2xl font-bold h-8'>
               {score >= 85 ? '正解！' : score >= 70 ? 'まあまあ！' : '残念！'} (
               {score}%)
@@ -104,7 +135,7 @@ export default function QuizPage() {
             className='w-48 h-48 mb-4 flex items-center justify-center font-bold text-4xl'
             style={{
               backgroundColor: showAnswer
-                ? `rgb(${currentQuestion.r}, ${currentQuestion.g}, ${currentQuestion.b})`
+                ? `rgb(${currentQuestion?.r}, ${currentQuestion?.g}, ${currentQuestion?.b})`
                 : 'rgb(200, 200, 200)',
             }}
           >
@@ -129,7 +160,14 @@ export default function QuizPage() {
         <div className='text-center'>
           <h1 className='text-4xl font-bold mb-8'>JIS慣用色クイズ</h1>
           <button className='btn btn-primary btn-lg' onClick={handleStartQuiz}>
-            クイズを開始
+            はじめから
+          </button>
+          <button
+            className='btn btn-secondary btn-lg ml-4'
+            onClick={handleContinueQuiz}
+            disabled={remainingQuestions.length == 0}
+          >
+            つづきから
           </button>
         </div>
       )}
